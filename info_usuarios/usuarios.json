@@ -1,0 +1,9 @@
+{
+    "usuarios": [
+        {
+            "id": "3d6251ab-7bbb-4238-b20b-9d97503c291a",
+            "username": "admin",
+            "password": "1234"
+        }
+    ]
+}

@@ -23,6 +23,21 @@ from private_gpt.server.ingest.ingest_service import IngestService
 from private_gpt.settings.settings import settings
 from private_gpt.ui.images import logo_svg
 
+import json
+import os
+import uuid
+import tkinter as tk
+from tkinter import *
+import datetime
+import requests
+from bs4 import BeautifulSoup
+from tkinter import messagebox
+
+user_id = "a"
+all_messages_g = ""
+user_name = ""
+historial_str = ""
+
 logger = logging.getLogger(__name__)
 
 THIS_DIRECTORY_RELATIVE = Path(__file__).parent.relative_to(PROJECT_ROOT_PATH)
@@ -133,6 +148,13 @@ class PrivateGptUi:
             return history_messages[:20]
 
         new_message = ChatMessage(content=message, role=MessageRole.USER)
+
+        global all_messages_g
+        all_messages_g = build_history()
+
+        if(message=="/Guardar" and user_id!="a"):
+            self.actualizar_historial()
+
         all_messages = [*build_history(), new_message]
         # If a system prompt is set, add it as a system message
         if self._system_prompt:
@@ -251,6 +273,235 @@ class PrivateGptUi:
 
         self._ingest_service.bulk_ingest([(str(path.name), path) for path in paths])
 
+    def _upload_URL_file(self, files: list[str]) -> None:
+        root=tk.Tk()
+        root.geometry("450x190")
+        root.title("URLs Form")
+        root.resizable(False,False)
+        root.config(background="#DEE7FB")
+        main_title = Label(text="Introduce the URL(s) separated by commas", font=(14), fg="#DEE7FB", bg="#6165ED", width="300")
+        main_title.pack()
+
+        username_label  = Label(text="URL(s)", bg="#6165ED", fg="#DEE7FB", width="20")
+        username_label.place(x=18, y=60)
+
+        URLs = StringVar()
+
+        URLs_entry = Entry(textvariable=URLs, width="40")
+
+        URLs_entry.place(x=18, y=90)
+
+        submit_btn = Button(root, text="Submit info", command=lambda: self.send_URLs_data(URLs, root), width="30", bg="#6165ED", fg="#DEE7FB")
+        submit_btn.place(x=18, y=130)
+
+        root.mainloop()
+
+        
+    def send_URLs_data(self, URLs_, root_) -> None:
+            
+            root_.destroy()
+
+            URLs = URLs_.get()
+
+            # Crear la carpeta URL_files si no existe
+            carpeta_url_files = "URL_files"
+            if not os.path.exists(carpeta_url_files):
+                os.makedirs(carpeta_url_files)
+
+            lista_urls = URLs.split(',')
+
+            rutas_absolutas = []
+    
+            for url in lista_urls:
+                # Eliminar espacios en blanco al principio y al final de la URL
+                url = url.strip()
+
+                try:
+                    # Realizar la solicitud HTTP GET a la URL
+                    response = requests.get(url)
+                    
+                    # Verificar si la solicitud fue exitosa
+                    if response.status_code == 200:
+                        # Parsear el contenido HTML de la página web
+                        soup = BeautifulSoup(response.content, 'html.parser')
+                        
+                        # Extraer el texto sin las etiquetas HTML
+                        texto_sin_etiquetas = soup.get_text()
+                        
+                        # Obtener el nombre del archivo (usando el nombre de dominio de la URL)
+                        nombre_archivo = f"{url.replace('https://', '').replace('http://', '').replace('/', '_').replace(':', '_')}.txt"
+
+                        # Ruta completa del archivo dentro de la carpeta URL_files
+                        ruta_archivo = os.path.join(carpeta_url_files, nombre_archivo)
+                        
+                        # Guardar el contenido en un archivo de texto
+                        with open(ruta_archivo, 'w', encoding='utf-8') as archivo:
+                            archivo.write(texto_sin_etiquetas)
+                        
+                        rutas_absolutas.append(os.path.abspath(ruta_archivo))
+
+                        print(f"Contenido de la URL '{url}' guardado en el archivo: {ruta_archivo}")
+
+                    else:
+                        print(f"No se pudo obtener el contenido de la URL: {url}")
+                except Exception as e:
+                    print(f"Error al procesar la URL '{url}': {str(e)}")
+
+            self._upload_file(rutas_absolutas)
+
+
+    def _upload_IMG_file(self, files: list[str]) -> None:
+        None
+
+    def _upload_AUDIO_file(self, files: list[str]) -> None:
+        None
+
+    def actualizar_historial(self):
+        i=0
+        historial = []
+        for message in all_messages_g:
+
+            if i % 2 == 0:
+                # Si es una pregunta, crear un nuevo diccionario de conversación
+                new_historial = {
+                    "pregunta": message.content,
+                    "respuesta": ""
+                }
+            else:
+                # Si es una respuesta, agregarla al diccionario de conversación previo
+                new_historial["respuesta"] = message.content
+                # Agregar la conversación completa al historial
+                historial.append(new_historial)
+        
+            i += 1
+
+        # Definir la ruta de la carpeta info_usuarios
+        carpeta_info_usuarios = "info_usuarios"
+
+        # Crear la carpeta si no existe
+        if not os.path.exists(carpeta_info_usuarios):
+            os.makedirs(carpeta_info_usuarios)
+
+        # Definir la ruta de la carpeta historiales dentro de info_usuarios
+        carpeta_historiales = os.path.join(carpeta_info_usuarios, "historiales")
+
+        # Crear la carpeta historiales si no existe
+        if not os.path.exists(carpeta_historiales):
+            os.makedirs(carpeta_historiales)
+
+        # Definir el nombre del archivo dentro de la carpeta historiales
+        filename = os.path.join(carpeta_historiales, "historial_" + user_name + ".json")
+
+        if not os.path.exists(filename):
+            with open(filename, 'w') as f:
+                json.dump({"historiales": []}, f, indent=4)
+
+        # Cargar los usuarios existentes del archivo JSON
+        with open(filename, 'r') as f:
+            data = json.load(f)
+
+        # Obtener la fecha y hora actual
+        fecha_hora_actual = datetime.datetime.now()
+
+        # Formatear la fecha y hora según tus preferencias
+        fecha_hora_formateada = fecha_hora_actual.strftime("%Y-%m-%d %H:%M:%S")
+
+        # Agregar el nuevo usuario a la lista de usuarios
+        data["historiales"].append(fecha_hora_formateada)
+        data["historiales"].append(historial)
+
+        # Guardar los datos actualizados en el archivo JSON
+        with open(filename, 'w') as f:
+            json.dump(data, f, indent=4)
+
+        print("Datos guardados correctamente.")
+
+    def mostrar_historial(self):
+
+                carpeta_info_usuarios = "info_usuarios"
+
+                carpeta_historiales = os.path.join(carpeta_info_usuarios, "historiales")
+
+                filename = os.path.join(carpeta_historiales, "historial_" + user_name + ".json")
+
+                global historial_str
+                
+                with open(filename, "r") as archivo:
+                    historial_str = archivo.read()
+
+                data = json.loads(historial_str)
+
+                output_lines = []
+
+                if "historiales" in data and isinstance(data["historiales"], list):
+                    historiales = data["historiales"]
+                    
+                    i = 0
+                    while i < len(historiales):
+                        fecha = historiales[i]
+                        i += 1
+
+                        if i < len(historiales) and isinstance(historiales[i], list):
+                            qa_list = historiales[i]
+                            i += 1
+
+                            output_lines.append(fecha)
+
+                            for qa in qa_list:
+                                 
+                                output_lines.append("")
+                                pregunta = qa.get("pregunta", "")
+                                respuesta = qa.get("respuesta", "")
+                                output_lines.append(f"PREGUNTA: {pregunta}")
+                                output_lines.append(f"RESPUESTA: {respuesta}")  
+
+                            output_lines.append("")
+
+                output_str = "\n".join(output_lines).strip()
+
+                self.create_scrollable_window(output_str, "Historial")
+
+
+    def create_scrollable_window(self, content, title):
+        root = tk.Tk()
+        root.attributes("-topmost", True)
+        root.title(title)
+        root.geometry("700x900")
+        root.resizable(False, False)
+        root.config(background="#6165ED")
+
+        # Crear un marco para el contenido scrollable
+        frame = Frame(root, bg="#DEE7FB")
+        frame.pack(pady=20, padx=20, fill=tk.BOTH, expand=True)
+
+        # Crear un widget Text scrollable dentro del marco
+        text = Text(frame, wrap="word", width=60, height=15, bg="#DEE7FB", fg="#6165ED", font=("Arial", 12))
+        text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        # Agregar una barra de desplazamiento
+        scrollbar = Scrollbar(frame, command=text.yview)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        text.config(yscrollcommand=scrollbar.set)
+
+        # Insertar el contenido en el widget Text
+        text.insert(tk.END, content)
+
+        root.mainloop()
+
+    def guardar_historial(self):
+        
+        root = tk.Tk()
+        root.withdraw()  # Ocultar la ventana principal, ya que solo queremos mostrar el mensaje
+
+        # Asegurarse de que la ventana principal está en primer plano
+        root.attributes("-topmost", True)
+
+        messagebox.showinfo("Intrucciones", "Para poder guardar el historial, introducir /Guardar en el chat")
+
+        # Quitar el atributo de estar en primer plano y cerrar la ventana principal
+        root.attributes("-topmost", False)
+        root.destroy()
+
     def _delete_all_files(self) -> Any:
         ingested_files = self._ingest_service.list_ingested()
         logger.debug("Deleting count=%s files", len(ingested_files))
@@ -300,24 +551,255 @@ class PrivateGptUi:
         logger.debug("Creating the UI blocks")
         with gr.Blocks(
             title=UI_TAB_TITLE,
-            theme=gr.themes.Soft(primary_hue=slate),
+            theme=gr.themes.Soft(),
             css=".logo { "
-            "display:flex;"
-            "background-color: #C7BAFF;"
-            "height: 80px;"
-            "border-radius: 8px;"
-            "align-content: center;"
-            "justify-content: center;"
-            "align-items: center;"
-            "}"
-            ".logo img { height: 25% }"
-            ".contain { display: flex !important; flex-direction: column !important; }"
-            "#component-0, #component-3, #component-10, #component-8  { height: 100% !important; }"
-            "#chatbot { flex-grow: 1 !important; overflow: auto !important;}"
-            "#col { height: calc(100vh - 112px - 16px) !important; }",
+                    "display: flex;"
+                    "background-color: #DEE7FB;" 
+                    "height: 80px;"
+                    "border-radius: 8px;"
+                    "align-items: center;"
+                    "justify-content: center;"
+                    "}"
+                    "body { background-color: #FFFFFF; }"  
+                    ".small-label { font-size: 8px; color: #DEE7FB; }"  
+                    ".logo img { height: 25% }"
+                    ".button { "
+                    "background-color: #6165ed;"  
+                    "color: #FFFFFF;"  
+                    "border: 1px solid #DEE7FB;"  
+                    "border-radius: 4px;"
+                    "}"
+                    ".button:hover { "
+                    "background-color: #3451B3;"  
+                    "}"
+                    ".contain { display: flex !important; flex-direction: column !important; }"
+                    "#component-0, #component-3, #component-10, #component-8 { height: 100% !important; }"
+                    "#chatbot { flex-grow: 1 !important; overflow: auto !important; background-color: #DEE7FB}"
+                    "#col { height: calc(100vh - 112px - 16px) !important; }"
+                    "#grlista { background-color: #DEE7FB; }"
+                    "#grradio { background-color: #DEE7FB; color: #FFFFFF; }"
+                    ".grrtb { background-color: #DEE7FB; }"
+                    ".grTextbox {"
+                    "background-color: #6165ed;"  
+                    "border: 1px solid #DEE7FB;"  
+                    "border-radius: 4px;"
+                    "font-size: 16px;" 
+                    "text-align: center;" 
+                    "display: grid;" 
+                    "align-items: center;" 
+                    "padding: 0 10px;" 
+                    "}",
         ) as blocks:
             with gr.Row():
-                gr.HTML(f"<div class='logo'/><img src={logo_svg} alt=PrivateGPT></div")
+                with gr.Column(scale=10):  # This column now uses 75% of the row
+                    gr.HTML(f"<div class='logo'><img src={logo_svg} alt='PrivateGPT'></div>")
+                with gr.Column(scale=2):  # This column now uses 25% of the row
+                    
+                    
+                    login_button = gr.Button("Log In", size="sm", elem_classes="button")
+                    register_button = gr.Button("Sign Up", size="sm", elem_classes="button")
+                    logout_button = gr.Button("Log Out", size="sm", visible=False, elem_classes="button")
+                    user_status = gr.Textbox(value="b", container=None, label=None, visible=False, elem_classes="grTextbox")
+                    
+                    
+            def logout():
+                global user_id
+                user_id = "a"
+                print("Sesion de usuario acabada")
+                # Crear la ventana principal
+                root = tk.Tk()
+                root.withdraw()  # Ocultar la ventana principal, ya que solo queremos mostrar el mensaje
+
+                # Asegurarse de que la ventana principal está en primer plano
+                root.attributes("-topmost", True)
+
+                messagebox.showinfo("Sesión finalizada", f"Sesión de {user_name} finalizada")
+
+                # Quitar el atributo de estar en primer plano y cerrar la ventana principal
+                root.attributes("-topmost", False)
+                root.destroy()
+                # Hacer los botones de login y register invisibles
+                login_button_visibility = gr.update(visible=True)
+                register_button_visibility = gr.update(visible=True)
+                # Hacer los botones de guardar y mostrar visibles
+                mostrar_hist_button_visibility = gr.update(visible=False)
+                user_status_visibility = gr.update(visible=False)
+                logout_button_visibility = gr.update(visible=False)
+                            
+                return login_button_visibility, register_button_visibility, mostrar_hist_button_visibility, user_status_visibility, logout_button_visibility
+
+
+            def login_popup():
+               
+                    root=tk.Tk()
+                    root.attributes("-topmost", True)
+                    root.geometry("450x250")
+                    root.title("Log in Form")
+                    root.resizable(False,False)
+                    root.config(background="#DEE7FB")
+                    main_title = Label(text="Introduce your information", font=(14), fg="#DEE7FB", bg="#6165ED", width="300")
+                    main_title.pack()
+
+                    username_label  = Label(text="Username", bg="#6165ED", fg="#DEE7FB", width="20")
+                    username_label.place(x=18, y=60)
+                    password_label  = Label(text="Password", bg="#6165ED", fg="#DEE7FB", width="20")
+                    password_label.place(x=18, y=120)
+
+                    username = StringVar()
+                    password = StringVar()
+
+                    username_entry = Entry(textvariable=username, width="40")
+                    password_entry = Entry(textvariable=password, width="40", show='*')
+
+                    username_entry.place(x=18, y=90)
+                    password_entry.place(x=18, y= 150)
+
+                    submit_btn = Button(root, text="Submit info", command=lambda: send_log_data(username, password, root), width="30", bg="#6165ED", fg="#DEE7FB")
+                    submit_btn.place(x=18, y=190)
+
+                    root.mainloop()
+
+                    # Hacer los botones de login y register invisibles
+                    login_button_visibility = gr.update(visible=False)
+                    register_button_visibility = gr.update(visible=False)
+                    # Hacer los botones de guardar y mostrar visibles
+                    mostrar_hist_button_visibility = gr.update(visible=True)
+                    user_status_visibility = gr.update(value="                             "+user_name, visible=True)
+                    logout_button_visibility = gr.update(visible=True)
+                    
+                    return login_button_visibility, register_button_visibility, mostrar_hist_button_visibility, user_status_visibility, logout_button_visibility
+
+                
+
+            def register_popup():
+                
+                    root=tk.Tk()
+                    root.attributes("-topmost", True)
+                    root.geometry("450x308")
+                    root.title("Sign up Form")
+                    root.resizable(False,False)
+                    root.config(background="#DEE7FB")
+                    main_title = Label(text="Introduce your information", font=(14), fg="#DEE7FB", bg="#6165ED", width="300")
+                    main_title.pack()
+
+                    username_label  = Label(text="Username", bg="#6165ED", fg="#DEE7FB", width="20")
+                    username_label.place(x=18, y=60)
+                    password_label  = Label(text="Password", bg="#6165ED", fg="#DEE7FB", width="20")
+                    password_label.place(x=18, y=120)
+                    password2_label  = Label(text="Repeat Password", bg="#6165ED", fg="#DEE7FB", width="20")
+                    password2_label.place(x=18, y=180)
+
+                    username = StringVar()
+                    password = StringVar()
+                    password2 = StringVar()
+
+                    username_entry = Entry(textvariable=username, width="40")
+                    password_entry = Entry(textvariable=password, width="40", show='*')
+                    password2_entry = Entry(textvariable=password2, width="40", show='*')
+
+                    username_entry.place(x=18, y=90)
+                    password_entry.place(x=18, y= 150)
+                    password2_entry.place(x=18, y= 210)
+
+                    submit_btn = Button(root, text="Submit info", command=lambda: send_register_data(username, password, password2, root), width="30", bg="#6165ED", fg="#DEE7FB")
+                    submit_btn.place(x=18, y=250)
+
+                    root.mainloop()
+
+
+            def send_log_data(username_, password_, root_):
+                root_.attributes("-topmost", False)
+                root_.destroy()
+
+                global user_id
+                global user_name
+
+                username = username_.get()
+                password = str(password_.get())
+
+                # Ruta del archivo usuarios.json dentro de la carpeta info_usuarios
+                ruta_archivo = os.path.join("info_usuarios", "usuarios.json")
+
+                # Abrir el archivo y cargar los datos JSON
+                with open(ruta_archivo, 'r') as f:
+                    data = json.load(f)
+
+                # Buscar un usuario con el mismo nombre de usuario y contraseña
+                for user in data["usuarios"]:
+                    if user["username"] == username and user["password"] == password:
+                        user_id = user["id"]
+                        user_name = user["username"]
+
+                        print("Inicio de sesión exitoso.")
+                        messagebox.showinfo(user_name,"Inicio de sesión exitoso")
+
+                        # Hacer los botones de login y register invisibles
+                        login_button_visibility = gr.update(visible=False)
+                        register_button_visibility = gr.update(visible=False)
+                        # Hacer los botones de guardar y mostrar visibles
+                        mostrar_hist_button_visibility = gr.update(visible=True)
+                        guardar_hist_button_visibility = gr.update(visible=True)
+                        user_status_visibility = gr.update(value="                             "+user_name, visible=True)
+                        logout_button_visibility = gr.update(visible=True)
+                    
+                        return login_button_visibility, register_button_visibility, mostrar_hist_button_visibility, guardar_hist_button_visibility, user_status_visibility, logout_button_visibility
+                        
+
+                messagebox.showerror("Error","Nombre de usuario o contraseña incorrectos.")
+
+
+            def send_register_data(username, password, password2, root):
+                root.attributes("-topmost", False)
+                root.destroy()
+
+                # Obtener los datos de las entradas
+                username_value = username.get()
+                password_value = password.get()
+                password2_value = password2.get()
+
+                # Verificar si las contraseñas coinciden
+                if password_value != password2_value:
+                    print("Las contraseñas no coinciden.")
+                    return [None, None]  # No hacer nada si hay error
+
+                # Crear un identificador único para el usuario
+                user_id = str(uuid.uuid4())
+
+                # Crear un diccionario con los datos del nuevo usuario
+                new_user = {
+                    "id": user_id,
+                    "username": username_value,
+                    "password": password_value
+                }
+
+                # Verificar si el archivo JSON de usuarios existe, si no, crearlo
+
+                # Nombre de la carpeta donde queremos colocar el archivo
+                carpeta_info_usuarios = "info_usuarios"
+
+                # Verificar si la carpeta info_usuarios existe, si no, crearla
+                if not os.path.exists(carpeta_info_usuarios):
+                    os.makedirs(carpeta_info_usuarios)
+
+                filename = os.path.join(carpeta_info_usuarios, "usuarios.json")
+
+                if not os.path.exists(filename):
+                    with open(filename, 'w') as f:
+                        json.dump({"usuarios": []}, f, indent=4)
+
+                # Cargar los usuarios existentes del archivo JSON
+                with open(filename, 'r') as f:
+                    data = json.load(f)
+
+                # Agregar el nuevo usuario a la lista de usuarios
+                data["usuarios"].append(new_user)
+
+                # Guardar los datos actualizados en el archivo JSON
+                with open(filename, 'w') as f:
+                    json.dump(data, f, indent=4)
+
+                print("Datos guardados correctamente.")
+                messagebox.showinfo(user_name,"Registro exitoso")
 
             with gr.Row(equal_height=False):
                 with gr.Column(scale=3):
@@ -325,12 +807,29 @@ class PrivateGptUi:
                         MODES,
                         label="Mode",
                         value="Query Files",
+                        elem_id="grradio"
                     )
                     upload_button = gr.components.UploadButton(
-                        "Upload File(s)",
+                        "Upload File",
                         type="filepath",
                         file_count="multiple",
                         size="sm",
+                        elem_classes="button"
+                    )
+                    upload_URL_button = gr.Button(
+                        "Upload URL(s)",
+                        size="sm",
+                        elem_classes="button"
+                    )
+                    upload_IMG_button = gr.Button(
+                        "Upload Image",
+                        size="sm",
+                        elem_classes="button"
+                    )
+                    upload_AUDIO_button = gr.Button(
+                        "Upload Audio",
+                        size="sm",
+                        elem_classes="button"
                     )
                     ingested_dataset = gr.List(
                         self._list_ingested_files,
@@ -339,10 +838,26 @@ class PrivateGptUi:
                         height=235,
                         interactive=False,
                         render=False,  # Rendered under the button
+                        elem_id="grlista"
                     )
                     upload_button.upload(
                         self._upload_file,
                         inputs=upload_button,
+                        outputs=ingested_dataset,
+                    )
+                    upload_URL_button.click(
+                        self._upload_URL_file,
+                        inputs=upload_URL_button,
+                        outputs=ingested_dataset,
+                    )
+                    upload_IMG_button.click(
+                        self._upload_IMG_file,
+                        inputs=upload_IMG_button,
+                        outputs=ingested_dataset,
+                    )
+                    upload_AUDIO_button.click(
+                        self._upload_AUDIO_file,
+                        inputs=upload_AUDIO_button,
                         outputs=ingested_dataset,
                     )
                     ingested_dataset.change(
@@ -351,22 +866,53 @@ class PrivateGptUi:
                     )
                     ingested_dataset.render()
                     deselect_file_button = gr.components.Button(
-                        "De-select selected file", size="sm", interactive=False
+                        "De-select selected file", size="sm", interactive=False, elem_classes="button"
                     )
                     selected_text = gr.components.Textbox(
-                        "All files", label="Selected for Query or Deletion", max_lines=1
+                        "All files", label="Selected for Query or Deletion", max_lines=1, elem_classes="grrtb"
                     )
                     delete_file_button = gr.components.Button(
                         "🗑️ Delete selected file",
                         size="sm",
                         visible=settings().ui.delete_file_button_enabled,
                         interactive=False,
+                        elem_classes="button"
                     )
                     delete_files_button = gr.components.Button(
                         "⚠️ Delete ALL files",
                         size="sm",
                         visible=settings().ui.delete_all_files_button_enabled,
+                        elem_classes="button"
                     )
+                    mostrar_hist_button = gr.Button(
+                        "Mostrar Historial",
+                        size="sm",
+                        visible=False,
+                        elem_classes="button"
+                    )
+                    login_button.click(
+                        fn=login_popup,
+                        inputs=[],
+                        outputs=[login_button, register_button, mostrar_hist_button, 
+                                user_status, logout_button]
+                    )
+                    register_button.click(
+                        fn=register_popup,
+                        inputs=[],
+                        outputs=None
+                    )
+                    mostrar_hist_button.click(
+                        fn=self.mostrar_historial,
+                        inputs=[],
+                        outputs=None
+                    )
+
+                    logout_button.click(
+                        fn=logout,
+                        inputs=[],
+                        outputs=[login_button, register_button, mostrar_hist_button, user_status, logout_button]
+                    )
+
                     deselect_file_button.click(
                         self._deselect_selected_file,
                         outputs=[
@@ -407,6 +953,7 @@ class PrivateGptUi:
                         lines=2,
                         interactive=True,
                         render=False,
+                        elem_classes="grrtb"
                     )
                     # When mode changes, set default system prompt
                     mode.change(
