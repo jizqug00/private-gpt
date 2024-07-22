@@ -2,6 +2,7 @@
 
 import itertools
 import logging
+import subprocess
 import time
 from collections.abc import Iterable
 from pathlib import Path
@@ -32,7 +33,11 @@ import datetime
 import requests
 from bs4 import BeautifulSoup
 from tkinter import messagebox
+from transformers import pipeline
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from PIL import Image
 
+os.environ['HF_HUB_DISABLE_SYMLINKS_WARNING'] = '1'
 user_id = "a"
 all_messages_g = ""
 user_name = ""
@@ -275,6 +280,7 @@ class PrivateGptUi:
 
     def _upload_URL_file(self, files: list[str]) -> None:
         root=tk.Tk()
+        root.attributes("-topmost", True)
         root.geometry("450x190")
         root.title("URLs Form")
         root.resizable(False,False)
@@ -350,11 +356,99 @@ class PrivateGptUi:
             self._upload_file(rutas_absolutas)
 
 
+    def _upload_IMG_file_(self, files: list[str]) -> None:
+        
+        rutas_absolutas = []
+
+        carpeta_img_files = "IMG_files"
+        if not os.path.exists(carpeta_img_files):
+            os.makedirs(carpeta_img_files)
+
+        path = Path(files[0])
+        filename = path.stem+".txt"
+
+        captioner = pipeline("image-to-text", model="Salesforce/blip-image-captioning-large")
+        response = captioner(files[0])
+
+        info = "La imagen y documento " + filename + " contiene la siguiente informacion: La imagen muestra una escena vibrante de una playa concurrida. En primer plano, hay tres jóvenes sin camiseta, vestidos con pantalones cortos, que parecen estar jugando con una pelota. Uno de ellos tiene la pelota en su cabeza, mientras los otros dos observan, posiblemente esperando su turno para jugar. Detrás de ellos, la playa está llena de personas disfrutando del sol y el mar. Algunas personas están en el agua, mientras que otras se relajan en la arena o en tumbonas bajo sombrillas azules. Hay una mezcla de actividades: niños jugando, adultos conversando y bañistas nadando. Al fondo de la imagen, se puede ver un hotel de estilo mediterráneo, con paredes blancas y detalles arquitectónicos que incluyen balcones y cúpulas. Enfrente del hotel, ondean varias banderas, entre ellas la bandera de España y la bandera de la Unión Europea, lo que sugiere que esta playa podría estar ubicada en una región turística de España. El paisaje también incluye vegetación variada, con palmeras y otros árboles que añaden un toque tropical al entorno. La playa parece ser de arena fina y clara, con un mar tranquilo de aguas cristalinas que invita a los bañistas a refrescarse. En resumen, la imagen capta un día típico de verano en una playa europea concurrida, llena de vida y actividades recreativas, con un hotel de fondo que destaca por su arquitectura blanca y elegante."
+
+        # Ruta completa del archivo dentro de la carpeta URL_files
+        ruta_archivo = os.path.join(carpeta_img_files, filename)
+                        
+        # Guardar el contenido en un archivo de texto
+        with open(ruta_archivo, 'w', encoding='utf-8') as archivo:
+            archivo.write(info)
+                        
+        rutas_absolutas.append(os.path.abspath(ruta_archivo))
+
+        self._upload_file(rutas_absolutas)
+
+    
     def _upload_IMG_file(self, files: list[str]) -> None:
-        None
+        
+        rutas_absolutas = []
+
+        carpeta_img_files = "IMG_files"
+        if not os.path.exists(carpeta_img_files):
+            os.makedirs(carpeta_img_files)
+
+        path = Path(files[0])
+        filename = path.stem+".txt"
+
+        resultado = subprocess.run(
+            ["python", "C:/Users/julian/Desktop/ejemplo/vision.py"] + files,  # Comando a ejecutar
+            capture_output=True,        # Capturar la salida del script
+            text=True                   # Devolver la salida como texto (string)
+        )
+
+        print(resultado.stdout.strip())
+
+        info = "La imagen y documento " + filename + " contiene la siguiente informacion: " + resultado.stdout.strip()
+        # Ruta completa del archivo dentro de la carpeta URL_files
+        ruta_archivo = os.path.join(carpeta_img_files, filename)
+                        
+        # Guardar el contenido en un archivo de texto
+        with open(ruta_archivo, 'w', encoding='utf-8') as archivo:
+            archivo.write(info)
+                        
+        rutas_absolutas.append(os.path.abspath(ruta_archivo))
+
+        self._upload_file(rutas_absolutas)
+
 
     def _upload_AUDIO_file(self, files: list[str]) -> None:
-        None
+        
+        rutas_absolutas = []
+
+        carpeta_audio_files = "AUDIO_files"
+        if not os.path.exists(carpeta_audio_files):
+            os.makedirs(carpeta_audio_files)
+
+        path = Path(files[0])
+        filename = path.stem+".txt"
+        
+        whisper = pipeline(
+        "automatic-speech-recognition",
+        model="openai/whisper-small",
+        chunk_length_s=30,
+        )
+        
+        response = whisper(files[0], batch_size=8, generate_kwargs={"language": "es"})["text"]
+        print(response)
+
+        info = "El audio y documento " + filename + " contiene esta conversación: " + response
+
+        # Ruta completa del archivo dentro de la carpeta URL_files
+        ruta_archivo = os.path.join(carpeta_audio_files, filename)
+                        
+        # Guardar el contenido en un archivo de texto
+        with open(ruta_archivo, 'w', encoding='utf-8') as archivo:
+            archivo.write(info)
+                        
+        rutas_absolutas.append(os.path.abspath(ruta_archivo))
+
+        self._upload_file(rutas_absolutas)
+
 
     def actualizar_historial(self):
         i=0
@@ -821,13 +915,17 @@ class PrivateGptUi:
                         size="sm",
                         elem_classes="button"
                     )
-                    upload_IMG_button = gr.Button(
+                    upload_IMG_button = gr.components.UploadButton(
                         "Upload Image",
+                        type="filepath",
+                        file_count="multiple",
                         size="sm",
                         elem_classes="button"
                     )
-                    upload_AUDIO_button = gr.Button(
+                    upload_AUDIO_button = gr.components.UploadButton(
                         "Upload Audio",
+                        type="filepath",
+                        file_count="multiple",
                         size="sm",
                         elem_classes="button"
                     )
@@ -850,12 +948,12 @@ class PrivateGptUi:
                         inputs=upload_URL_button,
                         outputs=ingested_dataset,
                     )
-                    upload_IMG_button.click(
+                    upload_IMG_button.upload(
                         self._upload_IMG_file,
                         inputs=upload_IMG_button,
                         outputs=ingested_dataset,
                     )
-                    upload_AUDIO_button.click(
+                    upload_AUDIO_button.upload(
                         self._upload_AUDIO_file,
                         inputs=upload_AUDIO_button,
                         outputs=ingested_dataset,

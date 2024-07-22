@@ -17,6 +17,25 @@
                 "pregunta": "con que equipo renueva?",
                 "respuesta": "  The context provided only mentions that Lucas V\u00e1zquez plays for Real Madrid, so it doesn't provide any information on which team he renews his contract with."
             }
+        ],
+        "2024-07-22 01:59:08",
+        [
+            {
+                "pregunta": "Quien es xabi alonso?",
+                "respuesta": " Xabi Alonso es un exfutbolista espa\u00f1ol que jugaba como mediocentro ofensivo. En el contexto proporcionado, se menciona que fue miembro del Real Madrid durante la temporada 2003-04 y disput\u00f3 todos los encuentros de la Liga de Campeones en ese a\u00f1o. Tambi\u00e9n represent\u00f3 a Espa\u00f1a en la Eurocopa 2004."
+            },
+            {
+                "pregunta": "Que contiene la imagen canon 011?",
+                "respuesta": " La imagen Canon 011 muestra una escena vibrante de una playa concurrida, llena de personas disfrutando del sol y el mar. En primer plano hay tres j\u00f3venes sin camiseta jugando con una pelota, detr\u00e1s de ellos la playa est\u00e1 llena de personas que est\u00e1n en el agua o se relajan en la arena o en tumbonas bajo sombrillas azules. Hay un hotel de estilo mediterr\u00e1neo al fondo y vegetaci\u00f3n variada como palmeras y otros \u00e1rboles, adem\u00e1s de una mezcla de actividades tales como ni\u00f1os jugando, adultos conversando y ba\u00f1istas nadando."
+            },
+            {
+                "pregunta": "Sobre que trata la conversacion del documento 01_La_Vida_en_La_Playa__Conversacion.txt?",
+                "respuesta": " La conversaci\u00f3n en el archivo \"01_La_Vida_en_La_Playa__Conversacion.txt\" se centra en temas relacionados con la vida y las costumbres de los habitantes de una comunidad cercana a la playa, as\u00ed como sobre c\u00f3mo disfrutar del sol, el mar y la arena mientras est\u00e1n all\u00ed. Tambi\u00e9n hay referencias al entorno natural que rodea la playa, incluyendo vegetaci\u00f3n y fauna locales. Adem\u00e1s, se habla de los diferentes tipos de actividades que pueden realizarse en una comunidad costera como pasear por el mar o jugar a f\u00fatbol."
+            },
+            {
+                "pregunta": "Que paso en la guerra de las navas de tolosa?",
+                "respuesta": " La Guerra de Las Navas de Tolosa fue un enfrentamiento militar entre tropas cristianas y almohades que tuvo lugar el 16 de julio de 1212 cerca del pueblo jienense de Santa Elena. En la batalla, las fuerzas aliadas cristianas comandadas por Alfonso VIII de Castilla se enfrentaron a un ej\u00e9rcito num\u00e9ricamente superior al mando del califa Almohade Muhammad al-Nasir. La batalla termin\u00f3 con una victoria decisiva para los cristianos y es considerada como uno de los puntos culminantes de la Reconquista, aunque en realidad las consecuencias militares y estrat\u00e9gicas fueron limitadas."
+            }
         ]
     ]
 }

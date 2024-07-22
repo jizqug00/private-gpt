@@ -6774,7 +6774,7 @@ llms-openai-like = ["llama-index-llms-openai-like"]
 llms-sagemaker = ["boto3"]
 rerank-sentence-transformers = ["sentence-transformers", "torch"]
 storage-nodestore-postgres = ["asyncpg", "llama-index-storage-docstore-postgres", "llama-index-storage-index-store-postgres", "psycopg2-binary"]
-ui = ["gradio"]
+ui = ["gradio", "torch", "transformers"]
 vector-stores-chroma = ["llama-index-vector-stores-chroma"]
 vector-stores-clickhouse = ["clickhouse-connect", "llama-index-vector-stores-clickhouse"]
 vector-stores-postgres = ["llama-index-vector-stores-postgres"]
@@ -6783,4 +6783,4 @@ vector-stores-qdrant = ["llama-index-vector-stores-qdrant"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.12"
-content-hash = "5a2ffe28c38fe59d64fcbf2094b804da8e3f784dc42e1926eb7bd8bcd9dc6056"
+content-hash = "fa2b81800becaeb8cd27446015586b0605202c03dbc4958104e13064e200f059"

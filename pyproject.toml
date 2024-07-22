@@ -60,7 +60,7 @@ gradio = {version ="^4.37.2", optional = true}
 google-generativeai = {version ="^0.5.4", optional = true}
 
 [tool.poetry.extras]
-ui = ["gradio"]
+ui = ["gradio", "torch", "transformers"]
 llms-llama-cpp = ["llama-index-llms-llama-cpp"]
 llms-openai = ["llama-index-llms-openai"]
 llms-openai-like = ["llama-index-llms-openai-like"]
