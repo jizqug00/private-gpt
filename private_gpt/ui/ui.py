@@ -395,8 +395,14 @@ class PrivateGptUi:
         path = Path(files[0])
         filename = path.stem+".txt"
 
+        #resultado = subprocess.run(
+        #    ["python", "C:/Users/julian/Desktop/ejemplo/vision.py"] + files,  # Comando a ejecutar
+        #    capture_output=True,        # Capturar la salida del script
+        #    text=True                   # Devolver la salida como texto (string)
+        #)
+
         resultado = subprocess.run(
-            ["python", "C:/Users/julian/Desktop/ejemplo/vision.py"] + files,  # Comando a ejecutar
+            ["python", "vlm.py"] + files,  # Comando a ejecutar
             capture_output=True,        # Capturar la salida del script
             text=True                   # Devolver la salida como texto (string)
         )
