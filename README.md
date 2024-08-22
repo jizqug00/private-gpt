@@ -87,6 +87,9 @@ And finally run PrivateGPT with the Ollama configuration:
     - set PGPT_PROFILES=ollama
     - make run
 
+After these commands private-gpt will be running in localhost:8001.
+The first time it is executed the models will be downloaded when asked for them (upload files, upload audios, upload images and chatting).
+
 ## 🧩 Architecture
 Conceptually, PrivateGPT is an API that wraps a RAG pipeline and exposes its
 primitives.
