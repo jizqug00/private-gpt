@@ -1,6 +1,6 @@
 # 🔒 PrivateGPT 📑
 
-My PrivateGPT, modified from the repository "zylon-ai/private-gpt" is a production-ready AI project that allows you to ask questions about multimedia (Documents, Images, Audios, URLs) using the power of Large Language Models (LLMs), even in scenarios without an Internet connection. 100% private, no data leaves your
+My PrivateGPT, modified from the repository [zylon-ai/private-gpt](https://github.com/zylon-ai/private-gpt) is a production-ready AI project that allows you to ask questions about multimedia (Documents, Images, Audios, URLs) using the power of Large Language Models (LLMs), even in scenarios without an Internet connection. 100% private, no data leaves your
 execution environment at any point.
 
 The project provides an API offering all the primitives required to build private, context-aware AI applications.
@@ -79,7 +79,12 @@ Once done, you can install PrivateGPT with the following command:
 
 And finally run PrivateGPT with the Ollama configuration:
 
+#### Windows
     - $env:PGPT_PROFILES="ollama"
+    - make run
+
+#### macOS/Linux
+    - set PGPT_PROFILES=ollama
     - make run
 
 ## 🧩 Architecture
