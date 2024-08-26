@@ -34,8 +34,6 @@ import requests
 from bs4 import BeautifulSoup
 from tkinter import messagebox
 from transformers import pipeline
-from transformers import AutoModelForCausalLM, AutoTokenizer
-from PIL import Image
 
 os.environ['HF_HUB_DISABLE_SYMLINKS_WARNING'] = '1'
 user_id = "a"
@@ -355,7 +353,7 @@ class PrivateGptUi:
 
             self._upload_file(rutas_absolutas)
 
-
+    # No se utiliza 
     def _upload_IMG_file_(self, files: list[str]) -> None:
         
         rutas_absolutas = []
@@ -370,8 +368,7 @@ class PrivateGptUi:
         captioner = pipeline("image-to-text", model="Salesforce/blip-image-captioning-large")
         response = captioner(files[0])
 
-        info = "La imagen y documento " + filename + " contiene la siguiente informacion: La imagen muestra una escena vibrante de una playa concurrida. En primer plano, hay tres jóvenes sin camiseta, vestidos con pantalones cortos, que parecen estar jugando con una pelota. Uno de ellos tiene la pelota en su cabeza, mientras los otros dos observan, posiblemente esperando su turno para jugar. Detrás de ellos, la playa está llena de personas disfrutando del sol y el mar. Algunas personas están en el agua, mientras que otras se relajan en la arena o en tumbonas bajo sombrillas azules. Hay una mezcla de actividades: niños jugando, adultos conversando y bañistas nadando. Al fondo de la imagen, se puede ver un hotel de estilo mediterráneo, con paredes blancas y detalles arquitectónicos que incluyen balcones y cúpulas. Enfrente del hotel, ondean varias banderas, entre ellas la bandera de España y la bandera de la Unión Europea, lo que sugiere que esta playa podría estar ubicada en una región turística de España. El paisaje también incluye vegetación variada, con palmeras y otros árboles que añaden un toque tropical al entorno. La playa parece ser de arena fina y clara, con un mar tranquilo de aguas cristalinas que invita a los bañistas a refrescarse. En resumen, la imagen capta un día típico de verano en una playa europea concurrida, llena de vida y actividades recreativas, con un hotel de fondo que destaca por su arquitectura blanca y elegante."
-
+        info = "La imagen y documento " + filename + " contiene la siguiente informacion: " + response
         # Ruta completa del archivo dentro de la carpeta URL_files
         ruta_archivo = os.path.join(carpeta_img_files, filename)
                         
@@ -394,12 +391,6 @@ class PrivateGptUi:
 
         path = Path(files[0])
         filename = path.stem+".txt"
-
-        #resultado = subprocess.run(
-        #    ["python", "C:/Users/julian/Desktop/ejemplo/vision.py"] + files,  # Comando a ejecutar
-        #    capture_output=True,        # Capturar la salida del script
-        #    text=True                   # Devolver la salida como texto (string)
-        #)
 
         resultado = subprocess.run(
             ["python", "vlm.py"] + files,  # Comando a ejecutar

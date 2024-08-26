@@ -29,7 +29,7 @@ Full documentation on installation, dependencies, configuration, running the ser
 ingesting local documents, API details and UI features can be found here: https://docs.privategpt.dev/
 
 ## 💡 My Installation
-Steps I followed in my Windows installation, before the procedure [Ollama](https://ollama.com/) and Cuda need to be installed in the machine:
+Steps I followed in my Windows installation, before the procedure [Ollama](https://ollama.com/), Cuda and the libraries pillow, googletrans and transformaers need to be installed in the machine, these last libraries are because of the need to execute this external python script vlm.py to proccess the images with the VLM moondream2 avoiding problems with dependencies:
 
 ### 1. Clone the PrivateGPT Repository
 Clone the repository and navigate to it:
